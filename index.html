@@ -10,7 +10,7 @@ body {
     overflow: hidden;
     font-family: Bebas, sans-serif;
     background: url("board-design 2.png") no-repeat center center fixed;
-    background-size: cover; /* FIXED */
+    background-size: cover;
 }
 
 .wrapper {
@@ -45,12 +45,6 @@ body {
     transform: scale(1.3);
     text-shadow: 0 0 20px #00c3ff;
 }
-
-/* Fully invisible button */
-.minus-btn {
-    opacity: 0;
-    pointer-events: none;
-}
 </style>
 </head>
 
@@ -58,17 +52,43 @@ body {
 
 <div class="wrapper" id="candidates"></div>
 
-<script>
-let defaultCandidates = Array(9).fill().map(() => ({ name: "", votes: 0 }));
+<script type="module">
 
-let isUnlocked = false; // 🔒 Locked by default
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, update, set }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-let candidates = JSON.parse(localStorage.getItem("electionData")) || defaultCandidates;
+/* 🔥 REPLACE WITH YOUR FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  databaseURL: "YOUR_DATABASE_URL",
+  projectId: "YOUR_PROJECT_ID",
+};
 
-function saveData() {
-    localStorage.setItem("electionData", JSON.stringify(candidates));
-}
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
+let isUnlocked = false;
+let candidates = [];
+
+/* Create default if empty */
+const candidatesRef = ref(db, "candidates");
+
+onValue(candidatesRef, (snapshot) => {
+    if (!snapshot.exists()) {
+        let defaultData = Array(9).fill().map((_, i) => ({
+            name: "Candidate " + (i + 1),
+            votes: 0
+        }));
+        set(candidatesRef, defaultData);
+    } else {
+        candidates = snapshot.val();
+        render();
+    }
+});
+
+/* Render */
 function render() {
     const container = document.getElementById("candidates");
     container.innerHTML = "";
@@ -78,24 +98,24 @@ function render() {
             <div class="candidate">
                 <div class="candidate-name">${c.name}</div>
                 <div class="score" id="score-${index}">${c.votes}</div>
-                <button class="minus-btn" onclick="secureMinus(${index})">VOTES</button>
             </div>
         `;
     });
 }
 
+/* Animation */
 function animateCounter(element, start, end) {
     let duration = 300;
     let startTime = null;
 
-    function update(currentTime) {
+    function updateAnim(currentTime) {
         if (!startTime) startTime = currentTime;
         let progress = currentTime - startTime;
         let value = Math.floor(start + (end - start) * (progress / duration));
         element.textContent = value;
 
         if (progress < duration) {
-            requestAnimationFrame(update);
+            requestAnimationFrame(updateAnim);
         } else {
             element.textContent = end;
         }
@@ -104,53 +124,45 @@ function animateCounter(element, start, end) {
     element.classList.add("animate");
     setTimeout(() => element.classList.remove("animate"), 200);
 
-    requestAnimationFrame(update);
+    requestAnimationFrame(updateAnim);
 }
 
+/* Voting */
 function addVote(index) {
-    let oldValue = candidates[index].votes;
-    candidates[index].votes++;
-    saveData();
-    animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
+    const voteRef = ref(db, "candidates/" + index);
+    update(voteRef, {
+        votes: candidates[index].votes + 1
+    });
 }
 
 function minusVote(index) {
     if (candidates[index].votes > 0) {
-        let oldValue = candidates[index].votes;
-        candidates[index].votes--;
-        saveData();
-        animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
+        const voteRef = ref(db, "candidates/" + index);
+        update(voteRef, {
+            votes: candidates[index].votes - 1
+        });
     }
 }
 
-function secureAdd(index) {
-    if (!isUnlocked) return;
-    addVote(index);
-}
-
-function secureMinus(index) {
-    if (!isUnlocked) return;
-    minusVote(index);
-}
-
-/* 🔐 RESET (CTRL + ALT + R) */
+/* Reset */
 function resetAllVotes() {
     let entered = prompt("Enter Reset Password:");
     if (entered === "admin") {
-        candidates.forEach(c => c.votes = 0);
-        saveData();
-        render();
-        isUnlocked = true; // unlock after reset
+        let resetData = candidates.map(c => ({
+            name: c.name,
+            votes: 0
+        }));
+        set(candidatesRef, resetData);
+        isUnlocked = true;
         alert("All votes reset ✅ Editing unlocked 🔓");
     } else {
         alert("Wrong Password ❌");
     }
 }
 
-/* 🎹 Keyboard Control */
+/* Keyboard Controls */
 document.addEventListener("keydown", function(event) {
 
-    /* Toggle Edit Mode (CTRL + ALT + Z) */
     if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "z") {
         event.preventDefault();
         isUnlocked = !isUnlocked;
@@ -158,7 +170,6 @@ document.addEventListener("keydown", function(event) {
         return;
     }
 
-    /* Reset (CTRL + ALT + R) */
     if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "r") {
         event.preventDefault();
         resetAllVotes();
@@ -186,7 +197,6 @@ document.addEventListener("keydown", function(event) {
     }
 });
 
-render();
 </script>
 
 </body>
