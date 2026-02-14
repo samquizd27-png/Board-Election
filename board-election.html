@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Board of Trustee 2026 Election</title>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        font-family: 'Bebas', sans-serif;
+        background: url("board-design 2.png") no-repeat center center fixed;
+        background-size: 100%;
+    }
+
+    .wrapper {
+        display: flex;
+        height: 100vh;
+        align-items: flex-end;
+        justify-content: space-around;
+        padding: 0 0%;
+        box-sizing: border-box;
+    }
+
+    .candidate {
+        width: 10%;
+        text-align: center;
+        color: white;
+        padding-bottom: 60px;
+    }
+
+    .candidate-name {
+        font-size: 1.2vw;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .score {
+        font-size: 7vw;
+        font-weight: 900;
+        transition: transform 0.2s ease;
+    }
+
+    .votes-label {
+        font-size: 1vw;
+        letter-spacing: 2px;
+        margin-top: 4px;
+        font-family: Gilroy;
+        opacity: 50;
+
+    }
+
+    .animate {
+        transform: scale(1.3);
+        color: #ffffff;
+        text-shadow: 0 0 20px #00c3ff;
+    }
+
+    button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor:default;
+    }        
+    .minus-btn {
+            background: #5e001e;
+            color: white;
+             font-family: Gilroy;
+        opacity: 50;
+
+    }
+
+
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper" id="candidates"></div>
+
+<script>
+let candidates = [
+    { name: "", votes: 0 },
+    { name: "", votes: 0 },
+    { name: "", votes: 0 },
+    { name: "", votes: 0 },
+    { name: "", votes: 0 },
+    { name: "", votes: 0 },
+    { name: "", votes: 0 },
+    { name: "", votes: 0 },
+    { name: "", votes: 0 }
+];
+
+function render() {
+    const container = document.getElementById("candidates");
+    container.innerHTML = "";
+
+    candidates.forEach((c, index) => {
+        container.innerHTML += `
+            <div class="candidate">
+                <div class="candidate-name">${c.name}</div>
+                <div class="score" id="score-${index}">${c.votes}</div>
+                <button class="minus-btn" onclick="minusVote(${index})">VOTES</button>
+            </div>
+        `;
+    });
+}
+
+function animateCounter(element, start, end) {
+    let duration = 400;
+    let startTime = null;
+
+    function update(currentTime) {
+        if (!startTime) startTime = currentTime;
+        let progress = currentTime - startTime;
+        let value = Math.floor(start + (end - start) * (progress / duration));
+        element.textContent = value;
+
+        if (progress < duration) {
+            requestAnimationFrame(update);
+        } else {
+            element.textContent = end;
+        }
+    }
+
+    element.classList.add("animate");
+    setTimeout(() => element.classList.remove("animate"), 250);
+
+    requestAnimationFrame(update);
+}
+
+function addVote(index) {
+    let oldValue = candidates[index].votes;
+    candidates[index].votes++;
+    animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
+}
+
+function minusVote(index) {
+    if (candidates[index].votes > 0) {
+        let oldValue = candidates[index].votes;
+        candidates[index].votes--;
+        animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
+    }
+}
+
+// 🎹 Keyboard Control
+document.addEventListener("keydown", function(event) {
+
+    if (event.code.startsWith("Digit")) {
+        let number = parseInt(event.code.replace("Digit", ""));
+        if (number >= 1 && number <= 9) {
+            addVote(number - 1);
+        }
+    }
+
+    if (event.code.startsWith("Numpad")) {
+        let number = parseInt(event.code.replace("Numpad", ""));
+        if (number >= 1 && number <= 9) {
+            addVote(number - 1);
+        }
+    }
+
+    // SHIFT + number = minus vote
+    if (event.shiftKey && event.code.startsWith("Digit")) {
+        let number = parseInt(event.code.replace("Digit", ""));
+        if (number >= 1 && number <= 9) {
+            minusVote(number - 1);
+        }
+    }
+
+});
+
+render();
+</script>
+
+</body>
+</html>
