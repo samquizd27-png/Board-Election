@@ -82,7 +82,7 @@
 <div class="wrapper" id="candidates"></div>
 
 <script>
-let candidates = [
+let defaultCandidates = [
     { name: "", votes: 0 },
     { name: "", votes: 0 },
     { name: "", votes: 0 },
@@ -93,6 +93,13 @@ let candidates = [
     { name: "", votes: 0 },
     { name: "", votes: 0 }
 ];
+
+// ✅ Load saved data if exists
+let candidates = JSON.parse(localStorage.getItem("electionData")) || defaultCandidates;
+
+function saveData() {
+    localStorage.setItem("electionData", JSON.stringify(candidates));
+}
 
 function render() {
     const container = document.getElementById("candidates");
@@ -135,6 +142,7 @@ function animateCounter(element, start, end) {
 function addVote(index) {
     let oldValue = candidates[index].votes;
     candidates[index].votes++;
+    saveData(); // ✅ save after change
     animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
 }
 
@@ -142,6 +150,7 @@ function minusVote(index) {
     if (candidates[index].votes > 0) {
         let oldValue = candidates[index].votes;
         candidates[index].votes--;
+        saveData(); // ✅ save after change
         animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
     }
 }
@@ -163,14 +172,12 @@ document.addEventListener("keydown", function(event) {
         }
     }
 
-    // SHIFT + number = minus vote
     if (event.shiftKey && event.code.startsWith("Digit")) {
         let number = parseInt(event.code.replace("Digit", ""));
         if (number >= 1 && number <= 9) {
             minusVote(number - 1);
         }
     }
-
 });
 
 render();
