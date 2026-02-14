@@ -173,6 +173,23 @@ function minusVote(index) {
     }
 }
 
+    // 🔐 RESET PASSWORD (can be different from admin)
+let RESET_PASSWORD = "reset123"; // CHANGE THIS
+
+function resetAllVotes() {
+    let entered = prompt("Enter Reset Password:");
+
+    if (entered === RESET_PASSWORD) {
+        candidates.forEach(c => c.votes = 0);
+        saveData();
+        render();
+        alert("All votes have been reset ✅");
+    } else {
+        alert("Wrong Reset Password ❌");
+    }
+}
+
+
 // 🔐 Secure Versions
 function secureAdd(index) {
     if (checkPassword()) {
@@ -209,6 +226,15 @@ document.addEventListener("keydown", function(event) {
             secureMinus(number - 1);
         }
     }
+
+    // 🕵️ Invisible Reset Trigger
+// Press CTRL + ALT + R to trigger reset
+document.addEventListener("keydown", function(event) {
+    if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "r") {
+        resetAllVotes();
+    }
+});
+
 });
 
 // 🔒 Manual Lock (Optional)
@@ -216,6 +242,8 @@ function lockSystem() {
     isUnlocked = false;
     alert("System Locked 🔒");
 }
+
+    
 
 render();
 </script>
