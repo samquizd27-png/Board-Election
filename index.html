@@ -94,7 +94,10 @@ let defaultCandidates = [
     { name: "", votes: 0 }
 ];
 
-// ✅ Load saved data if exists
+let ADMIN_PASSWORD = "admin123"; // 🔐 CHANGE THIS PASSWORD
+let isUnlocked = false;
+
+// ✅ Load saved data
 let candidates = JSON.parse(localStorage.getItem("electionData")) || defaultCandidates;
 
 function saveData() {
@@ -110,7 +113,7 @@ function render() {
             <div class="candidate">
                 <div class="candidate-name">${c.name}</div>
                 <div class="score" id="score-${index}">${c.votes}</div>
-                <button class="minus-btn" onclick="minusVote(${index})">VOTES</button>
+                <button class="minus-btn" onclick="secureMinus(${index})">VOTES</button>
             </div>
         `;
     });
@@ -139,10 +142,25 @@ function animateCounter(element, start, end) {
     requestAnimationFrame(update);
 }
 
+// 🔐 Password Check
+function checkPassword() {
+    if (isUnlocked) return true;
+
+    let entered = prompt("Enter Admin Password:");
+    if (entered === ADMIN_PASSWORD) {
+        isUnlocked = true;
+        alert("Editing Unlocked ✅");
+        return true;
+    } else {
+        alert("Wrong Password ❌");
+        return false;
+    }
+}
+
 function addVote(index) {
     let oldValue = candidates[index].votes;
     candidates[index].votes++;
-    saveData(); // ✅ save after change
+    saveData();
     animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
 }
 
@@ -150,38 +168,58 @@ function minusVote(index) {
     if (candidates[index].votes > 0) {
         let oldValue = candidates[index].votes;
         candidates[index].votes--;
-        saveData(); // ✅ save after change
+        saveData();
         animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
     }
 }
 
-// 🎹 Keyboard Control
+// 🔐 Secure Versions
+function secureAdd(index) {
+    if (checkPassword()) {
+        addVote(index);
+    }
+}
+
+function secureMinus(index) {
+    if (checkPassword()) {
+        minusVote(index);
+    }
+}
+
+// 🎹 Keyboard Control (Protected)
 document.addEventListener("keydown", function(event) {
 
     if (event.code.startsWith("Digit")) {
         let number = parseInt(event.code.replace("Digit", ""));
         if (number >= 1 && number <= 9) {
-            addVote(number - 1);
+            secureAdd(number - 1);
         }
     }
 
     if (event.code.startsWith("Numpad")) {
         let number = parseInt(event.code.replace("Numpad", ""));
         if (number >= 1 && number <= 9) {
-            addVote(number - 1);
+            secureAdd(number - 1);
         }
     }
 
     if (event.shiftKey && event.code.startsWith("Digit")) {
         let number = parseInt(event.code.replace("Digit", ""));
         if (number >= 1 && number <= 9) {
-            minusVote(number - 1);
+            secureMinus(number - 1);
         }
     }
 });
 
+// 🔒 Manual Lock (Optional)
+function lockSystem() {
+    isUnlocked = false;
+    alert("System Locked 🔒");
+}
+
 render();
 </script>
+
 
 </body>
 </html>
