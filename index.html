@@ -82,78 +82,48 @@
 <div class="wrapper" id="candidates"></div>
 
 <script>
-let defaultCandidates = [
-    { name: "", votes: 0 },
-    { name: "", votes: 0 },
-    { name: "", votes: 0 },
-    { name: "", votes: 0 },
-    { name: "", votes: 0 },
-    { name: "", votes: 0 },
-    { name: "", votes: 0 },
-    { name: "", votes: 0 },
-    { name: "", votes: 0 }
+let votes = [
+  { name: "", votes: 0 },
+  { name: "", votes: 0 },
+  { name: "", votes: 0 },
+  { name: "", votes: 0 },
+  { name: "", votes: 0 },
+  { name: "", votes: 0 },
+  { name: "", votes: 0 },
+  { name: "", votes: 0 },
+  { name: "", votes: 0 }
 ];
 
-// ✅ Load saved data if exists
-let candidates = JSON.parse(localStorage.getItem("electionData")) || defaultCandidates;
+export default {
+  async fetch(request) {
 
-function saveData() {
-    localStorage.setItem("electionData", JSON.stringify(candidates));
-}
-
-function render() {
-    const container = document.getElementById("candidates");
-    container.innerHTML = "";
-
-    candidates.forEach((c, index) => {
-        container.innerHTML += `
-            <div class="candidate">
-                <div class="candidate-name">${c.name}</div>
-                <div class="score" id="score-${index}">${c.votes}</div>
-                <button class="minus-btn" onclick="minusVote(${index})">VOTES</button>
-            </div>
-        `;
-    });
-}
-
-function animateCounter(element, start, end) {
-    let duration = 400;
-    let startTime = null;
-
-    function update(currentTime) {
-        if (!startTime) startTime = currentTime;
-        let progress = currentTime - startTime;
-        let value = Math.floor(start + (end - start) * (progress / duration));
-        element.textContent = value;
-
-        if (progress < duration) {
-            requestAnimationFrame(update);
-        } else {
-            element.textContent = end;
-        }
+    // GET votes
+    if (request.method === "GET") {
+      return new Response(JSON.stringify(votes), {
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    element.classList.add("animate");
-    setTimeout(() => element.classList.remove("animate"), 250);
+    // UPDATE vote
+    if (request.method === "POST") {
+      const { index, action } = await request.json();
 
-    requestAnimationFrame(update);
-}
+      if (action === "add") {
+        votes[index].votes++;
+      }
 
-function addVote(index) {
-    let oldValue = candidates[index].votes;
-    candidates[index].votes++;
-    saveData(); // ✅ save after change
-    animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
-}
+      if (action === "minus" && votes[index].votes > 0) {
+        votes[index].votes--;
+      }
 
-function minusVote(index) {
-    if (candidates[index].votes > 0) {
-        let oldValue = candidates[index].votes;
-        candidates[index].votes--;
-        saveData(); // ✅ save after change
-        animateCounter(document.getElementById(`score-${index}`), oldValue, candidates[index].votes);
+      return new Response(JSON.stringify(votes), {
+        headers: { "Content-Type": "application/json" }
+      });
     }
-}
+
+    return new Response("Invalid request");
+  }
+};
 
 // 🎹 Keyboard Control
 document.addEventListener("keydown", function(event) {
