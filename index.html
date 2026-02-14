@@ -94,7 +94,7 @@ let defaultCandidates = [
     { name: "", votes: 0 }
 ];
 
-let ADMIN_PASSWORD = "CBTMediaAdmin321"; // 🔐 CHANGE THIS PASSWORD
+let ADMIN_PASSWORD = "admin"; // 🔐 CHANGE THIS PASSWORD
 let isUnlocked = false;
 
 // ✅ Load saved data
@@ -173,21 +173,28 @@ function minusVote(index) {
     }
 }
 
-    // 🔐 RESET PASSWORD (can be different from admin)
-let RESET_PASSWORD = "reset123"; // CHANGE THIS
+   // 🔐 RESET PASSWORD
+let RESET_PASSWORD = "admin"; // CHANGE THIS
 
 function resetAllVotes() {
     let entered = prompt("Enter Reset Password:");
 
     if (entered === RESET_PASSWORD) {
+
+        // Reset all scores
         candidates.forEach(c => c.votes = 0);
         saveData();
         render();
-        alert("All votes have been reset ✅");
+
+        // 🔓 Auto-unlock editing after reset
+        isUnlocked = true;
+
+        alert("All votes have been reset ✅\nEditing Unlocked 🔓");
     } else {
         alert("Wrong Reset Password ❌");
     }
 }
+
 
 
 // 🔐 Secure Versions
