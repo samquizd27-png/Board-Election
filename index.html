@@ -95,7 +95,7 @@ let defaultCandidates = [
 ];
 
 let ADMIN_PASSWORD = "admin"; // 🔐 CHANGE THIS PASSWORD
-let isUnlocked = false;
+let isUnlocked = false; // 🔒 Locked by default
 
 // ✅ Load saved data
 let candidates = JSON.parse(localStorage.getItem("electionData")) || defaultCandidates;
@@ -142,21 +142,6 @@ function animateCounter(element, start, end) {
     requestAnimationFrame(update);
 }
 
-// 🔐 Password Check
-function checkPassword() {
-    if (isUnlocked) return true;
-
-    let entered = prompt("Enter Admin Password:");
-    if (entered === ADMIN_PASSWORD) {
-        isUnlocked = true;
-        alert("Editing Unlocked ✅");
-        return true;
-    } else {
-        alert("Wrong Password ❌");
-        return false;
-    }
-}
-
 function addVote(index) {
     let oldValue = candidates[index].votes;
     candidates[index].votes++;
@@ -199,50 +184,58 @@ function resetAllVotes() {
 
 // 🔐 Secure Versions
 function secureAdd(index) {
-    if (checkPassword()) {
-        addVote(index);
-    }
+    if (!isUnlocked) return; // 🚫 Do nothing if locked
+    addVote(index);
 }
 
 function secureMinus(index) {
-    if (checkPassword()) {
-        minusVote(index);
-    }
+    if (!isUnlocked) return; // 🚫 Do nothing if locked
+    minusVote(index);
 }
+
 
 // 🎹 Keyboard Control (Protected)
 document.addEventListener("keydown", function(event) {
 
+    // 🔓 TOGGLE EDIT MODE (CTRL + ALT + Z)
+    if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "z") {
+        isUnlocked = !isUnlocked;
+
+        if (isUnlocked) {
+            console.log("Editing Unlocked 🔓");
+        } else {
+            console.log("Editing Locked 🔒");
+        }
+        return;
+    }
+
+    // 🚫 Stop if locked
+    if (!isUnlocked) return;
+
+    // ➕ Add vote (1–9)
     if (event.code.startsWith("Digit")) {
         let number = parseInt(event.code.replace("Digit", ""));
         if (number >= 1 && number <= 9) {
-            secureAdd(number - 1);
+            addVote(number - 1);
         }
     }
 
     if (event.code.startsWith("Numpad")) {
         let number = parseInt(event.code.replace("Numpad", ""));
         if (number >= 1 && number <= 9) {
-            secureAdd(number - 1);
+            addVote(number - 1);
         }
     }
 
+    // ➖ Minus vote (SHIFT + 1–9)
     if (event.shiftKey && event.code.startsWith("Digit")) {
         let number = parseInt(event.code.replace("Digit", ""));
         if (number >= 1 && number <= 9) {
-            secureMinus(number - 1);
+            minusVote(number - 1);
         }
     }
-
-    // 🕵️ Invisible Reset Trigger
-// Press CTRL + ALT + R to trigger reset
-document.addEventListener("keydown", function(event) {
-    if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "r") {
-        resetAllVotes();
-    }
 });
 
-});
 
 // 🔒 Manual Lock (Optional)
 function lockSystem() {
